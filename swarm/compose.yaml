@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+
+  manager:
+    container_name: manager
+    image: docker:dind
+    privileged: true
+
+  node-1:
+    container_name: node-1
+    image: docker:dind
+    privileged: true
+
+  node-2:
+    container_name: node-2
+    image: docker:dind
+    privileged: true
+
+  node-3:
+    container_name: node-3
+    image: docker:dind
+    privileged: true
