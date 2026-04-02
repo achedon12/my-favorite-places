@@ -104,7 +104,7 @@
 2. j'ai rajouté le mapping du dossier /home/manager puis j'ai redémarré les containers
 3. J'ai copié collé mon [hello-world.compose.yaml](./hello-world.compose.yaml) dans le dossier [home mappé](./home) puis j'ai exécuté la commande suivante à partir du manager :
     ```bash
-      docker stack deploy -c /home/manager/hello-world.compose.yaml hello-world
+      docker stack deploy -c /home/manager/hello-world.compose.yaml hello-world --detach=false
     ```
 4. Vérification des services
 
@@ -116,3 +116,42 @@
     ```bash
       docker stack ls
     ```
+
+6. Vérification via les noeuds
+
+   > Attention : les commandes suivantes doivent être exécutées à partir des nodes
+    ```bash
+      docker ps
+    ```
+   
+7. Variation de la clause deploy
+
+   > Ajout de la clause deploy dans le fichier [hello-world.compose.yaml](./hello-world.compose.yaml) avec le contenu suivant :
+   > ```yaml
+   >   hello-world:
+   >      image: nmatsui/hello-world-api
+   >      deploy:
+   >         replicas: 2
+   >         placement:
+   >            constraints: [node.role == manager]
+
+8. Vérification des services
+
+    ```bash
+      docker service ls
+    ```
+   
+9. Vérification du stack
+
+    ```bash
+      docker stack ls
+    ```
+
+10. Vérification via les noeuds
+
+    > Attention : les commandes suivantes doivent être exécutées à partir des nodes
+     ```bash
+        docker ps
+     ```
+    
+   > Maintenant on ne voit plus les services sur les nodes, car ils sont placés uniquement sur le manager
