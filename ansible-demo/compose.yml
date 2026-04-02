@@ -1,0 +1,7 @@
+services:
+  manager:
+    build: .
+    privileged: true
+  node:
+    build: .
+    privileged: true

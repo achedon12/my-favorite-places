@@ -1,0 +1,58 @@
+
+PLAY [Initialize Docker Swarm] *************************************************
+
+TASK [Gathering Facts] *********************************************************
+[WARNING]: Platform linux on host esgi-2604-ansible-manager-1 is using the
+discovered Python interpreter at /usr/bin/python3.12, but future installation
+of another Python interpreter could change the meaning of that path. See
+https://docs.ansible.com/ansible-
+core/2.16/reference_appendices/interpreter_discovery.html for more information.
+ok: [esgi-2604-ansible-manager-1]
+
+TASK [Initialize swarm on first manager] ***************************************
+changed: [esgi-2604-ansible-manager-1]
+
+TASK [Retrieve worker join token] **********************************************
+changed: [esgi-2604-ansible-manager-1]
+
+TASK [Set worker join token as a fact] *****************************************
+ok: [esgi-2604-ansible-manager-1]
+
+TASK [Check join command (for workers)] ****************************************
+ok: [esgi-2604-ansible-manager-1] => {
+    "worker_join_command": "docker swarm join --token SWMTKN-1-24rik573moc8hdmussbx3f3f9mvai92i5ffv341cdjf7tp30o4-33qj49avkcnerlomenbflolr1"
+}
+
+PLAY [Join workers to the Swarm cluster] ***************************************
+
+TASK [Gathering Facts] *********************************************************
+[WARNING]: Platform linux on host esgi-2604-ansible-node-1 is using the
+discovered Python interpreter at /usr/bin/python3.12, but future installation
+of another Python interpreter could change the meaning of that path. See
+https://docs.ansible.com/ansible-
+core/2.16/reference_appendices/interpreter_discovery.html for more information.
+ok: [esgi-2604-ansible-node-1]
+[WARNING]: Platform linux on host esgi-2604-ansible-node-3 is using the
+discovered Python interpreter at /usr/bin/python3.12, but future installation
+of another Python interpreter could change the meaning of that path. See
+https://docs.ansible.com/ansible-
+core/2.16/reference_appendices/interpreter_discovery.html for more information.
+ok: [esgi-2604-ansible-node-3]
+[WARNING]: Platform linux on host esgi-2604-ansible-node-2 is using the
+discovered Python interpreter at /usr/bin/python3.12, but future installation
+of another Python interpreter could change the meaning of that path. See
+https://docs.ansible.com/ansible-
+core/2.16/reference_appendices/interpreter_discovery.html for more information.
+ok: [esgi-2604-ansible-node-2]
+
+TASK [Join swarm as worker] ****************************************************
+changed: [esgi-2604-ansible-node-1]
+changed: [esgi-2604-ansible-node-2]
+changed: [esgi-2604-ansible-node-3]
+
+PLAY RECAP *********************************************************************
+esgi-2604-ansible-manager-1 : ok=5    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+esgi-2604-ansible-node-1   : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+esgi-2604-ansible-node-2   : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+esgi-2604-ansible-node-3   : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

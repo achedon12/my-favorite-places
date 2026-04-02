@@ -1,0 +1,48 @@
+# Playbook adapté pour les VMs/VPS Linux accessibles en SSH
+# Les changements principaux :
+# 1. Pas besoin de spécifier la connexion Docker
+# 2. become: yes fonctionne avec sudo sur les VMs standard
+# 3. La logique Docker Swarm reste identique
+
+- name: Initialize Docker Swarm
+  hosts: managers
+  become: yes
+  tasks:
+    - name: Verify Docker is installed
+      command: docker --version
+      register: docker_version
+      failed_when: docker_version.rc != 0
+
+    - name: Initialize swarm on first manager
+      command: "docker swarm init --advertise-addr {{ manager_ip }}"
+      run_once: true
+      register: command_result
+      failed_when: "'This node is already part of a swarm' not in command_result.stderr and command_result.rc != 0"
+
+    - name: Retrieve worker join token
+      command: "docker swarm join-token worker -q"
+      register: worker_token
+      run_once: true
+
+    - name: Set worker join token as a fact
+      set_fact:
+        worker_join_command: "docker swarm join --token {{ worker_token.stdout }}"
+
+    - name: Check join command (for workers)
+      debug:
+        var: worker_join_command
+
+- name: Join workers to the Swarm cluster
+  hosts: workers
+  become: yes
+  tasks:
+    - name: Verify Docker is installed
+      command: docker --version
+      register: docker_version
+      failed_when: docker_version.rc != 0
+
+    - name: Join swarm as worker
+      command: "{{ hostvars[groups['managers'][0]]['worker_join_command'] }} {{ hostvars[groups['managers'][0]]['manager_ip'] }}:2377"
+      register: command_result
+      failed_when: "'This node is already part of a swarm' not in command_result.stderr and command_result.rc != 0"
+
