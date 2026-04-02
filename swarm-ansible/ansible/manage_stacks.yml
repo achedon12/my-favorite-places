@@ -1,0 +1,44 @@
+- name: Docker Swarm Stack Management
+  hosts: managers
+  become: yes
+  gather_facts: no
+  vars:
+    action: list  # list, ls, deploy, remove, update
+  
+  tasks:
+    - name: List all deployed stacks
+      command: docker stack ls
+      register: stacks_list
+      when: action in ['list', 'ls']
+      run_once: true
+
+    - name: Display stacks
+      debug:
+        var: stacks_list.stdout_lines
+      when: action in ['list', 'ls']
+      run_once: true
+
+    - name: List all services
+      command: docker service ls
+      register: services_list
+      run_once: true
+
+    - name: Display services
+      debug:
+        var: services_list.stdout_lines
+      run_once: true
+
+    - name: Inspect services (detailed)
+      command: docker service inspect {{ item }}
+      register: service_inspect
+      loop: "{{ services_list.stdout_lines[1:] | map('regex_replace', '^([^ ]+).*', '\\1') | list }}"
+      when: action == 'inspect'
+      run_once: true
+
+    - name: Display service details
+      debug:
+        var: item.stdout
+      loop: "{{ service_inspect.results }}"
+      when: action == 'inspect' and item is not skipped
+      run_once: true
+

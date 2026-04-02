@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  manager:
+    build: .
+    container_name: swarm-manager
+    privileged: true
+    volumes:
+      - ./ansible:/ansible
+      - ./stacks:/stacks
+    networks:
+      - swarm-network
+    environment:
+      - ANSIBLE_HOST_KEY_CHECKING=False
+
+  node-1:
+    build: .
+    container_name: swarm-node-1
+    privileged: true
+    networks:
+      - swarm-network
+    environment:
+      - ANSIBLE_HOST_KEY_CHECKING=False
+
+  node-2:
+    build: .
+    container_name: swarm-node-2
+    privileged: true
+    networks:
+      - swarm-network
+    environment:
+      - ANSIBLE_HOST_KEY_CHECKING=False
+
+  node-3:
+    build: .
+    container_name: swarm-node-3
+    privileged: true
+    networks:
+      - swarm-network
+    environment:
+      - ANSIBLE_HOST_KEY_CHECKING=False
+
+networks:
+  swarm-network:
+    driver: bridge
+

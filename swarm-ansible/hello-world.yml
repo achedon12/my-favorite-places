@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  hello-world:
+    image: nmatsui/hello-world-api
+    deploy:
+      replicas: 2
+      placement:
+        constraints: [node.role == manager]
+
+volumes:
+  data:
+
+networks:
+  default:
+    driver: overlay
+

@@ -1,0 +1,72 @@
+- name: Docker Swarm Health Check
+  hosts: managers
+  become: yes
+  gather_facts: no
+  
+  tasks:
+    - name: Check swarm status
+      command: docker info
+      register: docker_info
+      run_once: true
+
+    - name: Extract swarm status
+      set_fact:
+        swarm_active: "{{ 'active' in docker_info.stdout | lower }}"
+      run_once: true
+
+    - name: Display swarm status
+      debug:
+        msg: "Swarm is {{ 'ACTIVE' if swarm_active else 'INACTIVE' }}"
+      run_once: true
+
+    - name: List all nodes
+      command: docker node ls
+      register: nodes_list
+      run_once: true
+
+    - name: Display nodes
+      debug:
+        var: nodes_list.stdout_lines
+      run_once: true
+
+    - name: Check node health
+      command: "docker node inspect {{ item }}"
+      register: node_info
+      loop: "{{ groups['managers'] + groups['workers'] }}"
+
+    - name: Check disk space on all nodes
+      command: "docker exec {{ inventory_hostname }} df -h"
+      register: disk_space
+
+    - name: Display disk space
+      debug:
+        msg: "{{ inventory_hostname }}: {{ disk_space.stdout_lines }}"
+
+    - name: Check memory usage on all nodes
+      command: "docker exec {{ inventory_hostname }} free -h"
+      register: memory_usage
+      ignore_errors: yes
+
+    - name: Display memory usage
+      debug:
+        msg: "{{ inventory_hostname }}: {{ memory_usage.stdout_lines }}"
+      when: memory_usage is not failed
+
+    - name: List all running containers
+      command: "docker exec {{ inventory_hostname }} docker ps"
+      register: running_containers
+
+    - name: Display running containers
+      debug:
+        msg: "{{ inventory_hostname }}: {{ running_containers.stdout_lines }}"
+
+    - name: Health check summary
+      debug:
+        msg: |
+          ✅ Swarm Health Check Complete
+          - Swarm Status: {{ 'ACTIVE' if swarm_active else 'INACTIVE' }}
+          - Total Nodes: {{ nodes_list.stdout_lines | length - 1 }}
+          - Manager Nodes: {{ groups['managers'] | length }}
+          - Worker Nodes: {{ groups['workers'] | length }}
+      run_once: true
+
