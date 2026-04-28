@@ -1,12 +1,10 @@
-version: '3.8'
-
 services:
   traefik:
     image: traefik:v3.6
     networks:
       - web
     ports:
-      - "80:80"
+      - 80:80
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     command:
@@ -37,13 +35,74 @@ services:
     networks:
       - web
     deploy:
-      replicas: 3
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.whoami.rule=Host(`whoami.swarm.localhost`)"
         - "traefik.http.routers.whoami.entrypoints=web"
         - "traefik.http.services.whoami.loadbalancer.server.port=80"
 
+  # --- Voting App ---
+  redis:
+    image: redis:alpine
+    networks:
+      - frontend
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_DB: "postgres"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    command: |
+      sh -c "
+      mkdir -p /docker-entrypoint-initdb.d &&
+      echo \"CREATE TABLE IF NOT EXISTS votes (id SERIAL PRIMARY KEY, vote_id VARCHAR(255) NOT NULL, vote VARCHAR(255) NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);\" > /docker-entrypoint-initdb.d/init.sql &&
+      docker-entrypoint.sh postgres
+      "
+
+  vote:
+    image: dockersamples/examplevotingapp_vote
+    networks:
+      - frontend
+      - web
+    deploy:
+      replicas: 2
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.vote.rule=Host(`vote.swarm.localhost`)"
+        - "traefik.http.routers.vote.entrypoints=web"
+        - "traefik.http.services.vote.loadbalancer.server.port=80"
+
+  result:
+    image: dockersamples/examplevotingapp_result
+    networks:
+      - backend
+      - web
+    deploy:
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.result.rule=Host(`result.swarm.localhost`)"
+        - "traefik.http.routers.result.entrypoints=web"
+        - "traefik.http.services.result.loadbalancer.server.port=80"
+
+  worker:
+    image: dockersamples/examplevotingapp_worker
+    networks:
+      - frontend
+      - backend
+    deploy:
+      replicas: 2
+
 networks:
   web:
     external: true
+  frontend:
+  backend:
+
+volumes:
+  db-data:
