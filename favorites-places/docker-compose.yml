@@ -19,7 +19,7 @@ services:
   server:
     container_name: esgiserver
     build:
-      context: server
+      context: ../server
     ports:
       - 3000:3000
     depends_on:
@@ -37,7 +37,7 @@ services:
   client:
     container_name: esgiclient
     build:
-      context: client
+      context: ../client
     ports:
       - 801:80
     depends_on:
