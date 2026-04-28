@@ -1,71 +1,80 @@
-# Quick Start - Traefik sur Docker Swarm
+# Quick Start - Traefik avec Docker Compose
 
 ## Démarrage rapide
 
-### 1. Assurez-vous que Docker Swarm est initialisé
-
-```bash
-# Vérifier l'état du Swarm
-docker node ls
-
-# Si le Swarm n'est pas initialisé
-docker swarm init --advertise-addr <VOTRE_IP>
-```
-
-### 2. Lancez le déploiement
+### 1. Lancez le déploiement
 
 ```bash
 cd ansible-demo/traefik
 ./deploy.sh
 ```
 
-### 3. Accessez les services
+### 2. Vérifiez l'état
 
-- **Dashboard Traefik** : http://traefik.swarm.localhost:8080/dashboard/
-- **Service Whoami** : http://whoami.swarm.localhost
-
-## Commandes utiles
-
-### Vérifier l'état
 ```bash
 ./check.sh
 ```
 
+### 3. Accédez aux services
+
+- **Dashboard Traefik** : http://traefik.swarm.localhost:8080/
+- **Service Whoami** : http://whoami.swarm.localhost
+
+## Commandes utiles
+
 ### Voir les logs
 ```bash
-docker service logs traefik_traefik
-docker service logs traefik_whoami
+docker compose logs -f traefik
+docker compose logs -f whoami1
 ```
 
-### Nettoyer
+### Redémarrer un service
+```bash
+docker compose restart traefik
+```
+
+### Arrêter tous les services
 ```bash
 ./cleanup.sh
 ```
 
+## Informations de déploiement
+
+- **3 instances** de whoami pour le load balancing
+- **Traefik v1.7** comme reverse proxy et load balancer
+- **Réseau bridge** pour la communication inter-conteneurs
+- **Localhost** pour le développement local
+
 ## Dépannage
 
-### Les services ne démarre pas
+### Les services ne sont pas accessibles
 
-1. Vérifiez que vous êtes sur le manager :
+1. Vérifiez que le /etc/hosts est correct :
    ```bash
-   docker info | grep "Is Manager"
+   cat /etc/hosts | grep swarm
    ```
 
-2. Vérifiez les logs :
+2. Redémarrez les services :
    ```bash
-   docker service logs traefik_traefik
+   docker compose down && docker compose up -d
    ```
 
-### Les services répondent 504/502
+3. Attendez 30 secondes que Traefik découvre les services
 
-- Attends que les services soient complètement déployés (30-60 secondes)
-- Vérifie que le réseau overlay est actif : `docker network ls | grep web`
+### Traefik affiche 404
 
-### Problème /etc/hosts
+- Cela signifie que Traefik fonctionne mais n'a pas découvert les services
+- Redémarrez Traefik : `docker compose restart traefik`
+- Vérifiez les logs : `docker compose logs traefik`
 
-- Sur Linux/Mac, utilisez `sudo cat /etc/hosts` pour vérifier
-- Sur Windows, éditez `C:\Windows\System32\drivers\etc\hosts`
+### Port 80 déjà utilisé
 
-## Pour plus de détails
+Si le port 80 est occupé, modifiez le docker-compose.yml :
+```yaml
+ports:
+  - "8000:80"  # utiliser le port 8000 à la place
+```
 
-Consulter `README.md` pour la documentation complète.
+## Pour plus d'informations
+
+Consultez `README.md` pour une documentation complète.
