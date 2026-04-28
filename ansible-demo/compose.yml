@@ -2,6 +2,21 @@ services:
   manager:
     build: .
     privileged: true
+    ports:
+      - "80:80"
+      - "8080:8080"
+    networks:
+      swarm_network:
+        ipv4_address: 172.80.11.3
   node:
     build: .
     privileged: true
+    networks:
+      swarm_network:
+
+networks:
+  swarm_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.80.11.0/24

@@ -39,54 +39,7 @@ docker compose version
 
 ---
 
-## 🏗️ Architecture
-
-### Structure du projet
-
-```
-ansible-demo/
-├── compose.yml                          # Configuration Docker Compose
-├── Dockerfile                           # Image Docker personnalisée (Python + sudo)
-├── ansible.sh                           # Script de lancement du playbook
-├── README.md                            # Ce fichier
-├── GUIDE_SSH_ANSIBLE.md                 # Guide pour SSH (VMs/VPS)
-├── DOCKER_VS_SSH_COMPARISON.md          # Comparaison Docker vs SSH
-├── Responses.md                         # Exercices et réponses
-└── ansible/
-    ├── inventory.ini                    # Configuration des hosts (Docker)
-    ├── inventory_ssh.ini                # Configuration des hosts (SSH)
-    ├── init_swarm_cluster.yml           # Playbook principal (Docker)
-    └── init_swarm_cluster_ssh.yml       # Playbook adapté pour SSH
-```
-
-### Cluster Docker
-
-```
-Docker Host (votre machine)
-│
-└─ Docker Network (esgi-2604-ansible_default)
-   │
-   ├─ Manager (DinD)
-   │  └─ Docker Swarm: Manager (Leader)
-   │
-   ├─ Node 1 (DinD)
-   │  └─ Docker Swarm: Worker
-   │
-   ├─ Node 2 (DinD)
-   │  └─ Docker Swarm: Worker
-   │
-   ├─ Node 3 (DinD)
-   │  └─ Docker Swarm: Worker
-   │
-   └─ Node 4 (DinD)
-      └─ Docker Swarm: Worker
-      
-Total: 1 Manager + 4 Workers = 5 nœuds
-```
-
----
-
-## 🚀 Comment lancer ansible-demo
+## 🚀 lancer ansible-demo
 
 ### Étape 1 : Cloner/Accéder au répertoire
 
@@ -97,21 +50,6 @@ cd esgi-2603-my-favorite-places/ansible-demo
 ### Étape 2 : Construire les images Docker
 
 ```bash
-# Construire l'image personnalisée avec Python et sudo
-docker compose build
-```
-
-**Qu'est-ce que le Dockerfile fait ?**
-```dockerfile
-FROM docker:dind                              # Image Docker-in-Docker
-RUN apk add --update --no-cache python3 py3-pip && ln -sf python3 /usr/bin/python
-RUN apk add sudo                              # Installe Python et sudo (requis par Ansible)
-```
-
-### Étape 3 : Lancer les containers
-
-```bash
-# Lancer 1 manager + 4 workers
 docker compose up -d
 
 # Ou avec une autre configuration (exemple : 1 manager + 3 workers)
