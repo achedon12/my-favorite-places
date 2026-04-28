@@ -1,80 +1,88 @@
-# Quick Start - Traefik avec Docker Compose
+# Quick Start - Traefik v3.6 sur Docker Swarm
 
-## Démarrage rapide
+## Pré-requis
 
-### 1. Lancez le déploiement
+✓ Docker Swarm initialisé avec au moins **3 nœuds** (1 manager + 2 workers)
+
+Vérifiez:
+```bash
+docker node ls
+```
+
+## Démarrage en 3 étapes
+
+### 1️⃣ Déployer
 
 ```bash
 cd ansible-demo/traefik
 ./deploy.sh
 ```
 
-### 2. Vérifiez l'état
+### 2️⃣ Vérifier
 
 ```bash
 ./check.sh
 ```
 
-### 3. Accédez aux services
+### 3️⃣ Accéder
 
-- **Dashboard Traefik** : http://traefik.swarm.localhost:8080/
+- **Dashboard Traefik** : http://traefik.swarm.localhost
 - **Service Whoami** : http://whoami.swarm.localhost
 
-## Commandes utiles
+## Tester le Load Balancing
 
-### Voir les logs
+Chaque requête va à une instance différente:
+
 ```bash
-docker compose logs -f traefik
-docker compose logs -f whoami1
+# Voir quel conteneur répond
+for i in {1..5}; do
+  echo -n "Requête $i → "
+  curl -s http://whoami.swarm.localhost/ | grep Hostname
+done
 ```
 
-### Redémarrer un service
+## Commandes rapides
+
+| Commande | Description |
+|----------|-------------|
+| `./deploy.sh` | Déployer Traefik et whoami |
+| `./check.sh` | Vérifier l'état des services |
+| `./cleanup.sh` | Arrêter et supprimer tout |
+| `docker stack ps traefik` | Voir les tâches |
+| `docker service logs traefik_traefik` | Logs Traefik |
+| `docker service logs traefik_whoami` | Logs Whoami |
+
+## Scaler les services
+
 ```bash
-docker compose restart traefik
+# Augmenter les répliques whoami
+docker service scale traefik_whoami=5
+
+# Vérifier
+docker service ls | grep whoami
 ```
 
-### Arrêter tous les services
+## Dépannage rapide
+
+### Services ne répondent pas
 ```bash
-./cleanup.sh
+docker stack ps traefik
+docker service logs traefik_traefik
 ```
 
-## Informations de déploiement
+### Ajouter /etc/hosts manuellement
+```bash
+echo "127.0.0.1  traefik.swarm.localhost" | sudo tee -a /etc/hosts
+echo "127.0.0.1  whoami.swarm.localhost" | sudo tee -a /etc/hosts
+```
 
-- **3 instances** de whoami pour le load balancing
-- **Traefik v1.7** comme reverse proxy et load balancer
-- **Réseau bridge** pour la communication inter-conteneurs
-- **Localhost** pour le développement local
-
-## Dépannage
-
-### Les services ne sont pas accessibles
-
-1. Vérifiez que le /etc/hosts est correct :
-   ```bash
-   cat /etc/hosts | grep swarm
-   ```
-
-2. Redémarrez les services :
-   ```bash
-   docker compose down && docker compose up -d
-   ```
-
-3. Attendez 30 secondes que Traefik découvre les services
-
-### Traefik affiche 404
-
-- Cela signifie que Traefik fonctionne mais n'a pas découvert les services
-- Redémarrez Traefik : `docker compose restart traefik`
-- Vérifiez les logs : `docker compose logs traefik`
-
-### Port 80 déjà utilisé
-
-Si le port 80 est occupé, modifiez le docker-compose.yml :
+### Port 80 occupé?
+Modifier `stacks/traefik-stack.yml`:
 ```yaml
 ports:
-  - "8000:80"  # utiliser le port 8000 à la place
+  - "8000:80"  # Utiliser le port 8000
 ```
 
-## Pour plus d'informations
+## Pour plus de détails
 
-Consultez `README.md` pour une documentation complète.
+Voir `README.md` pour la documentation complète.
