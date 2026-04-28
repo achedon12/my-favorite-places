@@ -50,7 +50,7 @@ jobs:
       - name: Build and push client image
         uses: docker/build-push-action@v5
         with:
-          context: ./client
+          context: ./favorites-places/client
           push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -93,7 +93,7 @@ jobs:
       - name: Build and push server image
         uses: docker/build-push-action@v5
         with:
-          context: ./server
+          context: ./favorites-places/server
           push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
