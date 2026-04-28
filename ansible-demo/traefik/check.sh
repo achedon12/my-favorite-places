@@ -1,56 +1,28 @@
 #!/bin/bash
 
-STACK_NAME="traefik"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "=========================================="
-echo "Vérification de la stack Traefik"
+echo "Vérification de Traefik"
 echo "=========================================="
 
-# Vérifier Swarm
-if ! docker node ls > /dev/null 2>&1; then
-    echo "❌ Docker Swarm n'est pas actif"
-    exit 1
-fi
-echo "✓ Docker Swarm actif"
-
-# Vérifier la stack
-echo ""
-echo "=========================================="
-echo "État de la stack"
-echo "=========================================="
-if docker stack ls | grep -q "${STACK_NAME}"; then
-    echo "✓ Stack '${STACK_NAME}' déployée"
-    docker stack ps "${STACK_NAME}"
-else
-    echo "❌ Stack '${STACK_NAME}' non déployée"
-    exit 1
-fi
+cd "${SCRIPT_DIR}"
 
 # Vérifier les services
 echo ""
+echo "État des services:"
 echo "=========================================="
-echo "Services"
-echo "=========================================="
-docker service ls | grep "${STACK_NAME}"
+docker compose ps
 
-# Vérifier le réseau
+# Vérifier les logs
 echo ""
+echo "Logs Traefik (dernières 10 lignes):"
 echo "=========================================="
-echo "Réseau overlay"
-echo "=========================================="
-docker network ls | grep web
-
-# Vérifier les hosts
-echo ""
-echo "=========================================="
-echo "Résolution DNS (/etc/hosts)"
-echo "=========================================="
-grep "swarm.localhost" /etc/hosts || echo "❌ Entrées /etc/hosts non trouvées"
+docker compose logs --tail 10 traefik
 
 # Vérifier la connectivité
 echo ""
-echo "=========================================="
-echo "Connectivité"
+echo "Connectivité:"
 echo "=========================================="
 if ping -c 1 -W 2 traefik.swarm.localhost > /dev/null 2>&1; then
     echo "✓ traefik.swarm.localhost accessible"
@@ -64,13 +36,18 @@ else
     echo "⚠ whoami.swarm.localhost non accessible"
 fi
 
-# Vérifier les logs
+# Tester avec curl
 echo ""
+echo "Test HTTP:"
 echo "=========================================="
-echo "Logs (dernières 10 lignes)"
-echo "=========================================="
-echo "--- Traefik ---"
-docker service logs --tail 5 "${STACK_NAME}_traefik" 2>/dev/null || echo "Pas de logs disponibles"
-echo ""
-echo "--- Whoami ---"
-docker service logs --tail 5 "${STACK_NAME}_whoami" 2>/dev/null || echo "Pas de logs disponibles"
+if curl -s -I http://whoami.swarm.localhost/ | grep -q "200\|301\|302"; then
+    echo "✓ Whoami service répond"
+else
+    echo "⚠ Whoami service ne répond pas"
+fi
+
+if curl -s -I http://traefik.swarm.localhost:8080/ | grep -q "200"; then
+    echo "✓ Dashboard Traefik répond"
+else
+    echo "⚠ Dashboard Traefik ne répond pas"
+fi

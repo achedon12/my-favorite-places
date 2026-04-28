@@ -3,51 +3,28 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-STACK_FILE="${SCRIPT_DIR}/stacks/traefik-stack.yml"
-STACK_NAME="traefik"
 
 echo "=========================================="
-echo "Déploiement de la stack Traefik"
+echo "Déploiement de Traefik avec Docker Compose"
 echo "=========================================="
 
-# Vérifier que Docker Swarm est initialisé
-if ! docker node ls > /dev/null 2>&1; then
-    echo "❌ Erreur : Docker Swarm n'est pas initialisé"
-    echo "Veuillez d'abord initialiser le Swarm avec: docker swarm init --advertise-addr <IP>"
-    exit 1
-fi
-
-echo "✓ Docker Swarm est actif"
-
-# Créer le réseau overlay
+# Déployer avec docker compose
 echo ""
-echo "Création du réseau overlay 'web'..."
-docker network create --driver overlay --opt com.docker.network.driver.overlay.vxlanid=4096 web 2>/dev/null || echo "Le réseau 'web' existe déjà"
-echo "✓ Réseau 'web' prêt"
+echo "Démarrage des services..."
+cd "${SCRIPT_DIR}"
+docker compose up -d
 
-# Déployer la stack
+# Attendre que les services soient prêts
 echo ""
-echo "Déploiement de la stack Traefik..."
-docker stack deploy -c "${STACK_FILE}" "${STACK_NAME}"
-echo "✓ Stack déployée"
-
-# Attendre que les services démarre
-echo ""
-echo "Attente du démarrage des services (30 secondes)..."
-sleep 30
+echo "Attente du démarrage des services (15 secondes)..."
+sleep 15
 
 # Vérifier l'état
 echo ""
 echo "=========================================="
-echo "État de la stack"
+echo "Services déployés"
 echo "=========================================="
-docker stack ps "${STACK_NAME}"
-
-echo ""
-echo "=========================================="
-echo "Services"
-echo "=========================================="
-docker service ls | grep "${STACK_NAME}"
+docker compose ps
 
 echo ""
 echo "=========================================="
@@ -55,15 +32,18 @@ echo "Mise à jour du fichier /etc/hosts"
 echo "=========================================="
 
 # Mettre à jour /etc/hosts
-if ! grep -q "traefik.swarm.localhost" /etc/hosts; then
-    echo "127.0.0.1  traefik.swarm.localhost" | sudo tee -a /etc/hosts > /dev/null
+if ! grep -q "traefik.swarm.localhost" /etc/hosts 2>/dev/null; then
+    echo "127.0.0.1  traefik.swarm.localhost" >> /etc/hosts 2>/dev/null || \
+    (echo "⚠️  Vous devez ajouter manuellement à /etc/hosts:" && \
+     echo "   127.0.0.1  traefik.swarm.localhost" && \
+     echo "   127.0.0.1  whoami.swarm.localhost")
     echo "✓ traefik.swarm.localhost ajouté"
 else
     echo "✓ traefik.swarm.localhost déjà présent"
 fi
 
-if ! grep -q "whoami.swarm.localhost" /etc/hosts; then
-    echo "127.0.0.1  whoami.swarm.localhost" | sudo tee -a /etc/hosts > /dev/null
+if ! grep -q "whoami.swarm.localhost" /etc/hosts 2>/dev/null; then
+    echo "127.0.0.1  whoami.swarm.localhost" >> /etc/hosts 2>/dev/null || true
     echo "✓ whoami.swarm.localhost ajouté"
 else
     echo "✓ whoami.swarm.localhost déjà présent"
@@ -78,7 +58,8 @@ echo "Accédez aux services:"
 echo "  - Traefik Dashboard : http://traefik.swarm.localhost:8080/dashboard/"
 echo "  - Whoami Service   : http://whoami.swarm.localhost"
 echo ""
-echo "Pour voir les logs:"
-echo "  - Traefik : docker service logs ${STACK_NAME}_traefik"
-echo "  - Whoami  : docker service logs ${STACK_NAME}_whoami"
+echo "Commandes utiles:"
+echo "  - Voir les logs: docker compose logs -f traefik"
+echo "  - Arrêter: docker compose down"
+echo "  - Redémarrer: docker compose restart"
 echo ""
