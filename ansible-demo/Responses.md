@@ -44,3 +44,65 @@ Rajouté dans treafik-stack.yml
 ajout de la route /bonjour dans le dossier [favorites-places](../favorites-places)
 
 ajout du nouveau docker compose dans le dossier [favorites-places](../favorites-places) 
+
+
+```yaml
+services:
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: supersecret
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - web
+      - api_mfp
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+
+  server:
+    image: ghcr.io/achedon12/my-favorite-places-server:latest
+    ports:
+      - 3000:3000
+    depends_on:
+      - db
+    networks:
+      - web
+      - api_mfp
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.result.rule=Host(`api_mfp.swarm.localhost`)"
+        - "traefik.http.routers.result.entrypoints=web"
+        - "traefik.http.services.result.loadbalancer.server.port=3000"
+
+networks:
+  web:
+    external: true
+  api_mfp:    
+      driver: overlay
+
+volumes:
+  db-data:
+
+
+```
+
+# Exercice 2 : 
+
+je ne suis pas allez jusqu'a Shepherds (exo 2) puisque mon http://api_mfp.swarm.localhost/bonjour ou http://api_mfp.swarm.localhost/api ne tourne pas 
+
+![image](img.png)
+![image](img_1.png)
