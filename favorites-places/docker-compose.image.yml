@@ -1,0 +1,43 @@
+services:
+
+  db:
+    container_name: esgipostgres
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: supersecret
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  server:
+    container_name: esgiserver
+    image: ghcr.io/achedon12/my-favorite-places-server:latest
+    ports:
+      - 3000:3000
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  client:
+    container_name: esgiclient
+    image: ghcr.io/achedon12/my-favorite-places-client:latest
+    ports:
+      - 801:80
+    depends_on:
+      - server
+      - db
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  db-data:

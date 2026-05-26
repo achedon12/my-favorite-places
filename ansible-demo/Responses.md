@@ -16,6 +16,10 @@
    docker exec ansible-demo-node-2 docker swarm join --token SWMTKN-1-26nnxx8xx7b3kl9o8szwkeb599oz5zsfcbmhwbwdq5e5oppuim-64j9zro0ynztepa5rycysxk52 172.80.11.3:2377
    docker exec ansible-demo-node-3 docker swarm join --token SWMTKN-1-26nnxx8xx7b3kl9o8szwkeb599oz5zsfcbmhwbwdq5e5oppuim-64j9zro0ynztepa5rycysxk52 172.80.11.3:2377
    ```
+   
+   > docker exec ansible-demo-manager-1 docker node ls
+   > Commande pour vérifier que les nodes sont bien dans le cluster
+
 4. Ajouter l'overlay network pour traefik :
    ```bash
      docker exec ansible-demo-manager-1 docker network create -d overlay --attachable web
@@ -34,3 +38,9 @@
 # Exercice 2 et 3
 
 Rajouté dans treafik-stack.yml
+
+# Exercice 1
+
+ajout de la route /bonjour dans le dossier [favorites-places](../favorites-places)
+
+ajout du nouveau docker compose dans le dossier [favorites-places](../favorites-places) 
